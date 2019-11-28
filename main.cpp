@@ -103,14 +103,28 @@ void laplacian(NdArr& a, NdArr& out, double hx, double hy, double hz){
         }
     }
 
+    // periodic z
+    for (int i = 1; i < N-1; ++i){
+        for (int j = 1; j < N-1; ++j){
+            out(i, j, N-1) =
+                (a(i-1, j, N-2) - 2*a(i, j, N-1) + a(i+1, j, 1)) / hx2 +
+                (a(i, j-1, N-2) - 2*a(i, j, N-1) + a(i, j+1, 1)) / hy2 +
+                (a(i, j,   N-2) - 2*a(i, j, N-1) + a(i, j,   1)) / hz2;
+
+                // std::cout << i << "  " << j << "  " << k << "  " << out(i, j, k) << std::endl;
+        }
+    }
+
     for (int i = 0; i < N; ++i){
         for (int j = 0; j < N; ++j){
             out(0  , i, j) = 0;
             out(N-1, i, j) = 0;
             out(i, 0  , j) = 0;
             out(i, N-1, j) = 0;
-            out(i, j, 0  ) = 0;
-            out(i, j, N-1) = 0;
+
+            // type 1
+            // out(i, j, 0  ) = 0;
+            // out(i, j, N-1) = 0;
         }
     }
 
