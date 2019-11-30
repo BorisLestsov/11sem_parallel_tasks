@@ -90,10 +90,10 @@ def main():
     Lx = 1
     Ly = 1
     Lz = 1
-    N = 12
+    N = 128
 
     K = 10
-    T = 1e0
+    T = 1e-1
 
     def anal(Lx, Ly, Lz, T, N, K):
         xx = np.arange(N, dtype=np.float32) / (N-1) * Lx
