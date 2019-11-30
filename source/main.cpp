@@ -349,17 +349,21 @@ int main(int argc, char** argv){
         MPI_Comm_size(MPI_COMM_WORLD, &comm_size);
         MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-        int n_side = round(cbrt(comm_size));
-        if (n_side * n_side * n_side != comm_size)
-            throw std::string("wrong num of processes");
-
+        // int n_side = round(cbrt(comm_size));
+        // if (n_side * n_side * n_side != comm_size)
+        //     throw std::string("wrong num of processes");
+        //
     // std::cout << "KEK" << std::endl;    return 3;
-        NPx = n_side;
-        NPy = n_side;
-        NPz = n_side;
-        int dims[] = {NPx, NPy, NPz};
+        // NPx = n_side;
+        // NPy = n_side;
+        // NPz = n_side;
+        int dims[] = {0, 0, 0};
         int coords[] = {-1, -1, -1};
 
+        MPI_Dims_create(comm_size, 3, dims);
+        NPx = dims[0];
+        NPy = dims[1];
+        NPz = dims[2];
 
         // TODO: FIX 0, 0, 1
         int periods[] = {0, 0, 0};
@@ -384,6 +388,8 @@ int main(int argc, char** argv){
         Px = coords[0];
         Py = coords[1];
         Pz = coords[2];
+
+        // std::cout << rank << "    " << Px << "/" << NPx << "  " << Py << "/" << NPy << "  " << Pz << "/" << NPz << std::endl;
 
         Sx = Px*Nx;
         Sy = Py*Ny;

@@ -82,7 +82,8 @@ class Solver:
         # out[:,:,0] = 0
         # out[:,:,-1] = 0
 
-        return out/self.lap_mult
+        out /= self.lap_mult
+        return out
 
 
 
@@ -93,7 +94,7 @@ def main():
     N = 128
 
     K = 10
-    T = 1e-1
+    T = 1e-2
 
     def anal(Lx, Ly, Lz, T, N, K):
         xx = np.arange(N, dtype=np.float32) / (N-1) * Lx
