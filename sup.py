@@ -82,7 +82,7 @@ class Solver:
         # out[:,:,0] = 0
         # out[:,:,-1] = 0
 
-        out /= self.lap_mult
+        # out /= self.lap_mult
         return out
 
 
@@ -100,19 +100,21 @@ def main():
         xx = np.arange(N, dtype=np.float32) / (N-1) * Lx
         yy = np.arange(N, dtype=np.float32) / (N-1) * Ly
         zz = np.arange(N, dtype=np.float32) / (N-1) * Lz
-        tt = np.arange(K, dtype=np.float32) / K * T
+        tt = np.arange(K, dtype=np.float32) / (K-1) * T
 
+        mult = np.pi**2*(1./Lx**2 + 1./Ly**2 + 1./Lz**2)
+        # mult = 1
 
         xx = np.sin(np.pi/Lx*xx)
         yy = np.sin(np.pi/Ly*yy)
         zz = np.sin(np.pi/Lz*zz)
-        tt = np.cos(tt+2*np.pi)
+        tt = np.cos(np.sqrt(mult)*(tt))
 
         ret = xx[:, None, None, None] * \
               yy[None, :, None, None] * \
               zz[None, None, :, None] * \
               tt[None, None, None, :]
-        ret /= np.pi**2*(1./Lx**2 + 1./Ly**2 + 1./Lz**2)
+        # ret /= np.pi**2*(1./Lx**2 + 1./Ly**2 + 1./Lz**2)
         return ret
 
 
