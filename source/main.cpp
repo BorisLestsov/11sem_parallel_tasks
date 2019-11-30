@@ -95,7 +95,7 @@ void send_recv(int src, int dst, NdArr& send, NdArr& recv){
 }
 
 
-void laplacian(NdArr& a, NdArr& out){
+void laplacian(NdArr& a, NdArr& out, NdArr& p){
 
     float hx2 = hx*hx;
     float hy2 = hy*hy;
@@ -170,11 +170,6 @@ void laplacian(NdArr& a, NdArr& out){
     MPI_Cart_shift(MPI_CART_COMM, 2, 1, &src, &dst);
     send_recv(src, dst, max_z_sendN, max_z_recv0);
 
-    std::vector<int> p_shape(3);
-    p_shape[0] = a.shape[0]+2;
-    p_shape[1] = a.shape[1]+2;
-    p_shape[2] = a.shape[2]+2;
-    NdArr p(p_shape, 100000);
 
     for (int i = 0; i < Nx; ++i){
         for (int j = 0; j < Ny; ++j){
@@ -382,11 +377,20 @@ int main(int argc, char** argv){
         NdArr* lap_p = new NdArr(loc_shape);
 
 
+        std::vector<int> p_shape(3);
+        p_shape[0] = loc_shape[0]+2;
+        p_shape[1] = loc_shape[1]+2;
+        p_shape[2] = loc_shape[2]+2;
+
+        NdArr* p_p = new NdArr(p_shape);
+
+
         NdArr& a = *a_p;
         NdArr& u = *u_p;
         NdArr& u_prev = *u_prev_p;
         NdArr& u_prev_prev = *u_prev_prev_p;
         NdArr& lap = *lap_p;
+        NdArr& p = *p_p;
 
 
         std::ofstream out("out/out_" + std::to_string(rank) + ".txt", std::ios::out);
@@ -418,7 +422,7 @@ int main(int argc, char** argv){
         // step 1
         {
             anal(a, 1);
-            laplacian(u_prev_prev, lap);
+            laplacian(u_prev_prev, lap, p);
 
             for (int i = 0; i < Nx; ++i){
                 for (int j = 0; j < Ny; ++j){
@@ -441,7 +445,7 @@ int main(int argc, char** argv){
 
 
             anal(a, t);
-            laplacian(u_prev, lap);
+            laplacian(u_prev, lap, p);
 
             for (int i = 0; i < Nx; ++i){
                 for (int j = 0; j < Ny; ++j){
@@ -463,6 +467,14 @@ int main(int argc, char** argv){
             u_p = tmp;
 
         }
+
+        free(a_p);
+        free(u_p);
+        free(u_prev_p);
+        free(u_prev_prev_p);
+        free(lap_p);
+        free(p_p);
+
     }
     catch (const std::string& e) {
         std::cerr << "rank " << rank << ": " << e << std::endl;

@@ -20,7 +20,7 @@ public:
         // }
 
         // Default float constructor is zero-initialize
-        arr = new float[arr_size]();
+        arr = new float[arr_size];
 
         for (int i = 0; i < arr_size; ++i){
             arr[i] = value;
