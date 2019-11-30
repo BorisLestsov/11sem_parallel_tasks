@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <cstdlib>
 #include <math.h>
 #include "mpi.h"
 
@@ -8,18 +9,19 @@
 
 
 
-float Lx = 1;
-float Ly = 1;
-float Lz = 1;
-float T = 1e-2;
+float Lx = -1;
+float Ly = -1;
+float Lz = -1;
+float T = -1;
 
-int N = 8;
-int K = 10;
+int N = -1;
+int K = -1;
 
-float hx = Lx / (N-1);
-float hy = Ly / (N-1);
-float hz = Lz / (N-1);
-float tau = T / (K-1);
+float hx = -1;
+float hy = -1;
+float hz = -1;
+float tau =-1;
+float mult=-1;
 
 
 int rank = 0, comm_size;
@@ -44,6 +46,8 @@ float cmp_arr(NdArr& arr1, NdArr& arr2){
                 err = abs(arr1(i, j, k) - arr2(i, j, k));
                 if (err > max_err)
                     max_err = err;
+                // if (i == 0 && j == 0 && k == 0)
+                //     std::cout << "ERR " << i<<j<<k<< "    " << arr1(i,j,k) << "  " << arr2(i,j,k) << std::endl;
             }
         }
     }
@@ -60,22 +64,22 @@ void anal(NdArr& res, int t){
 
     for (int ii=0; ii < Nx; ++ii){
         float i = ii + Sx;
-        xx[ii] = sin(M_PI/Lx * i/N * Lx);
+        xx[ii] = sin(M_PI/Lx * i/(N-1) * Lx);
     }
     for (int ii=0; ii < Ny; ++ii){
         float i = ii + Sy;
-        yy[ii] = sin(M_PI/Lx * i/N * Ly);
+        yy[ii] = sin(M_PI/Lx * i/(N-1) * Ly);
     }
     for (int ii=0; ii < Nz; ++ii){
         float i = ii + Sz;
-        zz[ii] = sin(M_PI/Lz * i/N * Lz);
+        zz[ii] = sin(M_PI/Lz * i/(N-1) * Lz);
     }
 
     float t_val = cos(((float)t)/K * T + 2*M_PI);
     for (int i = 0; i < Nx; ++i){
         for (int j = 0; j < Ny; ++j){
             for (int k = 0; k < Nz; ++k){
-                res(i, j, k) = xx[i] * yy[j] * zz[k] * t_val;
+                res(i, j, k) = (xx[i] * yy[j] * zz[k] * t_val)/mult;
             }
         }
     }
@@ -83,22 +87,23 @@ void anal(NdArr& res, int t){
 
 void send_recv(int src, int dst, NdArr& send, NdArr& recv){
     MPI_Status status;
-    if (src >= 0){
-        if (dst >= 0){
+
+    // if (src >= 0){
+    //     if (dst >= 0){
             MPI_Sendrecv(send.arr, send.size(), MPI_FLOAT,
                         dst, 0, recv.arr, recv.size(),
                         MPI_FLOAT, src, 0,
                         MPI_CART_COMM, &status);
-        } else {
-            MPI_Send(send.arr, send.size(), MPI_FLOAT, dst, 0, MPI_CART_COMM);
-        }
-
-    } else {
-        if (dst >= 0){
-            MPI_Recv(recv.arr, recv.size(), MPI_FLOAT, src, 0, MPI_CART_COMM, &status);
-        } else {
-        }
-    }
+    //     } else {
+    //         MPI_Send(send.arr, send.size(), MPI_FLOAT, dst, 0, MPI_CART_COMM);
+    //     }
+    //
+    // } else {
+    //     if (dst >= 0){
+    //         MPI_Recv(recv.arr, recv.size(), MPI_FLOAT, src, 0, MPI_CART_COMM, &status);
+    //     } else {
+    //     }
+    // }
 }
 
 
@@ -108,7 +113,13 @@ void laplacian(NdArr& a, NdArr& out){
     float hy2 = hy*hy;
     float hz2 = hz*hz;
 
+    for (int i = 0; i < Nx-0; ++i)
+        for (int j = 0; j < Ny-0; ++j)
+            for (int k = 1; k < Nz-1; ++k)
+                out(i, j, k) = 100000;
+                // out(i, j, k) = 0;
 
+    /*
     for (int i = 1; i < Nx-1; ++i){
         for (int j = 1; j < Ny-1; ++j){
             for (int k = 1; k < Nz-1; ++k){
@@ -121,6 +132,7 @@ void laplacian(NdArr& a, NdArr& out){
             }
         }
     }
+    */
 
 
     // send, recv ...
@@ -171,27 +183,106 @@ void laplacian(NdArr& a, NdArr& out){
     int src = -1, dst = -1;
 
     MPI_Cart_shift(MPI_CART_COMM, 0, -1, &src, &dst);
-    send_recv(src, dst, max_x_send0, max_x_recv0);
+    send_recv(src, dst, max_x_send0, max_x_recvN);
     MPI_Cart_shift(MPI_CART_COMM, 0, 1, &src, &dst);
-    send_recv(src, dst, max_x_sendN, max_x_recvN);
+    send_recv(src, dst, max_x_sendN, max_x_recv0);
 
     MPI_Cart_shift(MPI_CART_COMM, 1, -1, &src, &dst);
-    send_recv(src, dst, max_y_send0, max_y_recv0);
+    send_recv(src, dst, max_y_send0, max_y_recvN);
     MPI_Cart_shift(MPI_CART_COMM, 1, 1, &src, &dst);
-    send_recv(src, dst, max_y_sendN, max_y_recvN);
+    send_recv(src, dst, max_y_sendN, max_y_recv0);
 
     MPI_Cart_shift(MPI_CART_COMM, 2, -1, &src, &dst);
-    send_recv(src, dst, max_z_send0, max_z_recv0);
+    send_recv(src, dst, max_z_send0, max_z_recvN);
     MPI_Cart_shift(MPI_CART_COMM, 2, 1, &src, &dst);
-    send_recv(src, dst, max_z_sendN, max_z_recvN);
+    send_recv(src, dst, max_z_sendN, max_z_recv0);
 
-    if (rank == 0){
-        //cout here
+    std::vector<int> p_shape(3);
+    p_shape[0] = a.shape[0]+2;
+    p_shape[1] = a.shape[1]+2;
+    p_shape[2] = a.shape[2]+2;
+    NdArr p(p_shape, 100000);
+
+    for (int i = 0; i < Nx; ++i){
+        for (int j = 0; j < Ny; ++j){
+            for (int k = 0; k < Nz; ++k){
+                p(i+1, j+1, k+1) = a(i, j, k);
+            }
+        }
+    }
+    for (int j = 0; j < Ny; ++j){
+        for (int k = 0; k < Nz; ++k){
+            int i;
+
+            i = 0;
+            p(i, j+1, k+1) = max_x_recv0(j, k);
+
+            i = Nx+1;
+            p(i, j+1, k+1) = max_x_recvN(j, k);
+        }
+    }
+    for (int i = 0; i < Nx; ++i){
+        for (int k = 0; k < Nz; ++k){
+            int j;
+
+            j = 0;
+            p(i+1, j, k+1) = max_y_recv0(i, k);
+
+            j = Ny+1;
+            p(i+1, j, k+1) = max_y_recvN(i, k);
+        }
+    }
+    for (int i = 0; i < Nx; ++i){
+        for (int j = 0; j < Ny; ++j){
+            int k;
+
+            k = 0;
+            p(i+1, j+1, k) = max_z_recv0(i, j);
+
+            k = Nz+1;
+            p(i+1, j+1, k) = max_z_recvN(i, j);
+        }
+    }
+    /*
+    */
+
+    // for (int i = 0; i < Nx; ++i){
+    //     for (int j = 0; j < Ny; ++j){
+    //         for (int k = 0; k < Nz; ++k){
+    //             std::cout << i<<j<<k<< "  " <<p(i,j,k) << std::endl;
+    //         }
+    //     }
+    // }
+
+
+    for (int i = 0; i < Nx; ++i){
+        for (int j = 0; j < Ny; ++j){
+            for (int k = 0; k < Nz; ++k){
+                int p_i = i+1;
+                int p_j = j+1;
+                int p_k = k+1;
+
+                out(i, j, k) =
+                    (p(p_i-1, p_j, p_k) - 2*p(p_i, p_j, p_k) + p(p_i+1, p_j, p_k)) / hx2 +
+                    (p(p_i, p_j-1, p_k) - 2*p(p_i, p_j, p_k) + p(p_i, p_j+1, p_k)) / hy2 +
+                    (p(p_i, p_j, p_k-1) - 2*p(p_i, p_j, p_k) + p(p_i, p_j, p_k+1)) / hz2;
+                out(i, j, k) /= mult;
+
+                // std::cout << i << "  " << j << "  " << k << "  " << out(i, j, k) << std::endl;
+            }
+        }
     }
 
+    //TODO: check ranges
+    /*
+    for (int j = 0; j < Ny; ++j){
+        for (int k = 0; k < Nz; ++k){
 
-    for (int j = 1; j < Ny-1; ++j){
-        for (int k = 1; k < Nz-1; ++k){
+            // if (rank == 0){
+            //     std::cout << j << "  " << k << "    " << max_x_recvN(j, k) << std::endl;;
+            // }
+            a_j_m_1 = (j==0)?max_y_recv0(i, k):a(i, j-1, k);
+
             int i;
 
             i = 0;
@@ -205,8 +296,8 @@ void laplacian(NdArr& a, NdArr& out){
             out(i, j, k) += (a(i, j, k-1)       -  2*a(i, j, k)  +  a(i, j, k+1)     ) / hz2;
         }
     }
-    for (int i = 1; i < Nx-1; ++i){
-        for (int k = 1; k < Nz-1; ++k){
+    for (int i = 0; i < Nx; ++i){
+        for (int k = 0; k < Nz-1; ++k){
             int j;
 
             j = 0;
@@ -220,8 +311,8 @@ void laplacian(NdArr& a, NdArr& out){
             out(i, j, k) += (a(i, j, k-1)       -  2*a(i, j, k)  +  a(i, j, k+1)     ) / hz2;
         }
     }
-    for (int i = 1; i < Nx-1; ++i){
-        for (int j = 1; j < Ny-1; ++j){
+    for (int i = 0; i < Nx-1; ++i){
+        for (int j = 0; j < Ny-1; ++j){
             int k;
 
             k = 0;
@@ -235,6 +326,7 @@ void laplacian(NdArr& a, NdArr& out){
             out(i, j, k) += (a(i, j, k-1)       -  2*a(i, j, k)  +  max_z_recvN(i, j)) / hz2;
         }
     }
+    */
 
 
     // periodic z
@@ -295,6 +387,8 @@ void laplacian(NdArr& a, NdArr& out){
             }
         }
     }
+    /*
+    */
 
 }
 
@@ -302,10 +396,22 @@ void laplacian(NdArr& a, NdArr& out){
 
 int main(int argc, char** argv){
 
+    Lx = atof(argv[1]);
+    Ly = atof(argv[2]);
+    Lz = atof(argv[3]);
+    T = atof(argv[4]);
+    N = atoi(argv[5]);
+    K = atoi(argv[6]);
+
+    hx = Lx / (N-1);
+    hy = Ly / (N-1);
+    hz = Lz / (N-1);
+    tau = T / (K-1);
+    mult = M_PI*M_PI * (1.0/(Lx*Lx) + 1.0/(Ly*Ly) + 1./(Lz*Lz));
+
 
     MPI_Init(&argc, &argv);
     MPI_Comm_set_errhandler(MPI_COMM_WORLD, MPI_ERRORS_ARE_FATAL);
-
 
     try {
         MPI_Comm_size(MPI_COMM_WORLD, &comm_size);
