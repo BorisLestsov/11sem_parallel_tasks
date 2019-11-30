@@ -79,12 +79,14 @@ void analytical(NdArr& res, int t){
         zz[ii] = sin(M_PI/Lz * i/(N-1) * Lz);
     }
 
-    float t_val = cos(((float)t)/K * T + 2*M_PI);
+    // float t_val = cos(((float)t)/(K-1) * T + 2*M_PI);
+    float t_val = cos(sqrt(mult) * ((float)t)/(K-1) * T);
 #pragma omp parallel for
     for (int i = 0; i < Nx; ++i){
         for (int j = 0; j < Ny; ++j){
             for (int k = 0; k < Nz; ++k){
-                res(i, j, k) = (xx[i] * yy[j] * zz[k] * t_val)/mult;
+                res(i, j, k) = (xx[i] * yy[j] * zz[k] * t_val);
+                // res(i, j, k) /= mult;
             }
         }
     }
@@ -247,7 +249,7 @@ void laplacian(NdArr& a, NdArr& out, NdArr& p){
                     (p(p_i-1, p_j, p_k) - 2*p(p_i, p_j, p_k) + p(p_i+1, p_j, p_k)) / hx2 +
                     (p(p_i, p_j-1, p_k) - 2*p(p_i, p_j, p_k) + p(p_i, p_j+1, p_k)) / hy2 +
                     (p(p_i, p_j, p_k-1) - 2*p(p_i, p_j, p_k) + p(p_i, p_j, p_k+1)) / hz2;
-                out(i, j, k) /= mult;
+                // out(i, j, k) /= mult;
 
                 // std::cout << i << "  " << j << "  " << k << "  " << out(i, j, k) << std::endl;
             }
@@ -349,17 +351,21 @@ int main(int argc, char** argv){
         MPI_Comm_size(MPI_COMM_WORLD, &comm_size);
         MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-        int n_side = round(cbrt(comm_size));
-        if (n_side * n_side * n_side != comm_size)
-            throw std::string("wrong num of processes");
-
+        // int n_side = round(cbrt(comm_size));
+        // if (n_side * n_side * n_side != comm_size)
+        //   K-1  throw std::string("wrong num of processes");
+        //
     // std::cout << "KEK" << std::endl;    return 3;
-        NPx = n_side;
-        NPy = n_side;
-        NPz = n_side;
-        int dims[] = {NPx, NPy, NPz};
+        // NPx = n_side;
+        // NPy = n_side;
+        // NPz = n_side;
+        int dims[] = {0, 0, 0};
         int coords[] = {-1, -1, -1};
 
+        MPI_Dims_create(comm_size, 3, dims);
+        NPx = dims[0];
+        NPy = dims[1];
+        NPz = dims[2];
 
         // TODO: FIX 0, 0, 1
         int periods[] = {0, 0, 0};
@@ -384,6 +390,8 @@ int main(int argc, char** argv){
         Px = coords[0];
         Py = coords[1];
         Pz = coords[2];
+
+        // std::cout << rank << "    " << Px << "/" << NPx << "  " << Py << "/" << NPy << "  " << Pz << "/" << NPz << std::endl;
 
         Sx = Px*Nx;
         Sy = Py*Ny;
