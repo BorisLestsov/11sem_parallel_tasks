@@ -44,7 +44,7 @@ float cmp_arr(NdArr& arr1, NdArr& arr2){
     for (int i = 0; i < Nx; ++i){
         for (int j = 0; j < Ny; ++j){
             for (int k = 0; k < Nz; ++k){
-                err = abs(arr1(i, j, k) - arr2(i, j, k));
+                err = fabs(arr1(i, j, k) - arr2(i, j, k));
                 if (err > max_err)
                     max_err = err;
                 // if (i == 0 && j == 0 && k == 0)
@@ -58,7 +58,7 @@ float cmp_arr(NdArr& arr1, NdArr& arr2){
 }
 
 
-void anal(NdArr& res, int t){
+void analytical(NdArr& res, int t){
     std::vector<float> xx(Nx, 0);
     std::vector<float> yy(Ny, 0);
     std::vector<float> zz(Nz, 0);
@@ -71,7 +71,7 @@ void anal(NdArr& res, int t){
 #pragma omp parallel for
     for (int ii=0; ii < Ny; ++ii){
         float i = ii + Sy;
-        yy[ii] = sin(M_PI/Lx * i/(N-1) * Ly);
+        yy[ii] = sin(M_PI/Ly * i/(N-1) * Ly);
     }
 #pragma omp parallel for
     for (int ii=0; ii < Nz; ++ii){
@@ -412,19 +412,9 @@ int main(int argc, char** argv){
         NdArr& p = *p_p;
 
 
-        std::ofstream out("out/out_" + std::to_string(rank) + ".txt", std::ios::out);
-
-        out << rank
-            << "    NPx: " << NPx << " Npy " << NPy << " Npz " << NPz
-            << "    Px: " << Px << " Py " << Py << " Pz " << Pz
-            << "    Sx: " << Sx << " Sy " << Sy << " Sz " << Sz
-            << "    Nx: " << Nx << " Ny " << Ny << " Nz " << Nz
-            << std::endl;
-
-
         // step 0
         {
-            anal(a, 0);
+            analytical(a, 0);
 
 #pragma omp parallel for
             for (int i = 0; i < Nx; ++i){
@@ -441,7 +431,7 @@ int main(int argc, char** argv){
 
         // step 1
         {
-            anal(a, 1);
+            analytical(a, 1);
             laplacian(u_prev_prev, lap, p);
 
 #pragma omp parallel for
@@ -465,7 +455,7 @@ int main(int argc, char** argv){
             NdArr& u_prev_prev = *u_prev_prev_p;
 
 
-            anal(a, t);
+            analytical(a, t);
             laplacian(u_prev, lap, p);
 
 #pragma omp parallel for
