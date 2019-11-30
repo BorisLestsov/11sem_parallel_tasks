@@ -2,7 +2,7 @@
 class NdArr{
 public:
 
-    NdArr(const std::vector<int>& shape_):
+    NdArr(const std::vector<int>& shape_, float value=0):
         Nd(shape_.size()),
         shape(shape_),
         strides(shape.size(), 1)
@@ -20,11 +20,11 @@ public:
         // }
 
         // Default float constructor is zero-initialize
-        arr = new float[arr_size]();
+        arr = new float[arr_size];
 
-        // for (int i = 0; i < arr_size; ++i){
-        //     arr[i] = 1005000;
-        // }
+        for (int i = 0; i < arr_size; ++i){
+            arr[i] = value;
+        }
     }
 
     ~NdArr(){
