@@ -88,22 +88,10 @@ void anal(NdArr& res, int t){
 void send_recv(int src, int dst, NdArr& send, NdArr& recv){
     MPI_Status status;
 
-    // if (src >= 0){
-    //     if (dst >= 0){
             MPI_Sendrecv(send.arr, send.size(), MPI_FLOAT,
                         dst, 0, recv.arr, recv.size(),
                         MPI_FLOAT, src, 0,
                         MPI_CART_COMM, &status);
-    //     } else {
-    //         MPI_Send(send.arr, send.size(), MPI_FLOAT, dst, 0, MPI_CART_COMM);
-    //     }
-    //
-    // } else {
-    //     if (dst >= 0){
-    //         MPI_Recv(recv.arr, recv.size(), MPI_FLOAT, src, 0, MPI_CART_COMM, &status);
-    //     } else {
-    //     }
-    // }
 }
 
 
@@ -113,26 +101,11 @@ void laplacian(NdArr& a, NdArr& out){
     float hy2 = hy*hy;
     float hz2 = hz*hz;
 
-    for (int i = 0; i < Nx-0; ++i)
-        for (int j = 0; j < Ny-0; ++j)
-            for (int k = 1; k < Nz-1; ++k)
-                out(i, j, k) = 100000;
-                // out(i, j, k) = 0;
+    // for (int i = 0; i < Nx-0; ++i)
+    //     for (int j = 0; j < Ny-0; ++j)
+    //         for (int k = 1; k < Nz-1; ++k)
+    //             out(i, j, k) = 100000;
 
-    /*
-    for (int i = 1; i < Nx-1; ++i){
-        for (int j = 1; j < Ny-1; ++j){
-            for (int k = 1; k < Nz-1; ++k){
-                out(i, j, k) =
-                    (a(i-1, j, k) - 2*a(i, j, k) + a(i+1, j, k)) / hx2 +
-                    (a(i, j-1, k) - 2*a(i, j, k) + a(i, j+1, k)) / hy2 +
-                    (a(i, j, k-1) - 2*a(i, j, k) + a(i, j, k+1)) / hz2;
-
-                // std::cout << i << "  " << j << "  " << k << "  " << out(i, j, k) << std::endl;
-            }
-        }
-    }
-    */
 
 
     // send, recv ...
@@ -272,61 +245,6 @@ void laplacian(NdArr& a, NdArr& out){
             }
         }
     }
-
-    //TODO: check ranges
-    /*
-    for (int j = 0; j < Ny; ++j){
-        for (int k = 0; k < Nz; ++k){
-
-            // if (rank == 0){
-            //     std::cout << j << "  " << k << "    " << max_x_recvN(j, k) << std::endl;;
-            // }
-            a_j_m_1 = (j==0)?max_y_recv0(i, k):a(i, j-1, k);
-
-            int i;
-
-            i = 0;
-            out(i, j, k) += (max_x_recv0(j, k)  -  2*a(i, j, k)  +  a(i+1, j, k)) / hx2;
-            out(i, j, k) += (a(i, j-1, k)       -  2*a(i, j, k)  +  a(i, j+1, k)) / hy2;
-            out(i, j, k) += (a(i, j, k-1)       -  2*a(i, j, k)  +  a(i, j, k+1)) / hz2;
-
-            i = Nx-1;
-            out(i, j, k) += (a(i-1, j, k)       -  2*a(i, j, k)  +  max_x_recvN(j, k)) / hx2;
-            out(i, j, k) += (a(i, j-1, k)       -  2*a(i, j, k)  +  a(i, j+1, k)     ) / hy2;
-            out(i, j, k) += (a(i, j, k-1)       -  2*a(i, j, k)  +  a(i, j, k+1)     ) / hz2;
-        }
-    }
-    for (int i = 0; i < Nx; ++i){
-        for (int k = 0; k < Nz-1; ++k){
-            int j;
-
-            j = 0;
-            out(i, j, k) += (a(i-1, j, k)       -  2*a(i, j, k)  +  a(i+1, j, k)) / hx2;
-            out(i, j, k) += (max_y_recv0(i, k)  -  2*a(i, j, k)  +  a(i, j+1, k)) / hy2;
-            out(i, j, k) += (a(i, j, k-1)       -  2*a(i, j, k)  +  a(i, j, k+1)) / hz2;
-
-            j = Ny-1;
-            out(i, j, k) += (a(i-1, j, k)       -  2*a(i, j, k)  +  a(i+1, j, k)     ) / hx2;
-            out(i, j, k) += (a(i, j-1, k)       -  2*a(i, j, k)  +  max_y_recvN(i, k)) / hy2;
-            out(i, j, k) += (a(i, j, k-1)       -  2*a(i, j, k)  +  a(i, j, k+1)     ) / hz2;
-        }
-    }
-    for (int i = 0; i < Nx-1; ++i){
-        for (int j = 0; j < Ny-1; ++j){
-            int k;
-
-            k = 0;
-            out(i, j, k) += (a(i-1, j, k)       -  2*a(i, j, k)  +  a(i+1, j, k)) / hx2;
-            out(i, j, k) += (a(i, j-1, k)       -  2*a(i, j, k)  +  a(i, j+1, k)) / hy2;
-            out(i, j, k) += (max_z_recv0(i, j)  -  2*a(i, j, k)  +  a(i, j, k+1)) / hz2;
-
-            k = Nz-1;
-            out(i, j, k) += (a(i-1, j, k)       -  2*a(i, j, k)  +  a(i+1, j, k)   ) / hx2;
-            out(i, j, k) += (a(i, j-1, k)       -  2*a(i, j, k)  +  a(i, j+1, k)   ) / hy2;
-            out(i, j, k) += (a(i, j, k-1)       -  2*a(i, j, k)  +  max_z_recvN(i, j)) / hz2;
-        }
-    }
-    */
 
 
     // periodic z
