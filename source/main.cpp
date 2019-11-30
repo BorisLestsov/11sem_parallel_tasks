@@ -44,7 +44,7 @@ float cmp_arr(NdArr& arr1, NdArr& arr2){
     for (int i = 0; i < Nx; ++i){
         for (int j = 0; j < Ny; ++j){
             for (int k = 0; k < Nz; ++k){
-                err = abs(arr1(i, j, k) - arr2(i, j, k));
+                err = fabs(arr1(i, j, k) - arr2(i, j, k));
                 if (err > max_err)
                     max_err = err;
                 // if (i == 0 && j == 0 && k == 0)
