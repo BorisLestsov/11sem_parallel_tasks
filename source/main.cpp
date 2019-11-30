@@ -40,6 +40,7 @@ float cmp_arr(NdArr& arr1, NdArr& arr2){
     float max_err = 0;
     float max_max_err;
 
+#pragma omp parallel for
     for (int i = 0; i < Nx; ++i){
         for (int j = 0; j < Ny; ++j){
             for (int k = 0; k < Nz; ++k){
@@ -62,20 +63,24 @@ void anal(NdArr& res, int t){
     std::vector<float> yy(Ny, 0);
     std::vector<float> zz(Nz, 0);
 
+#pragma omp parallel for
     for (int ii=0; ii < Nx; ++ii){
         float i = ii + Sx;
         xx[ii] = sin(M_PI/Lx * i/(N-1) * Lx);
     }
+#pragma omp parallel for
     for (int ii=0; ii < Ny; ++ii){
         float i = ii + Sy;
         yy[ii] = sin(M_PI/Lx * i/(N-1) * Ly);
     }
+#pragma omp parallel for
     for (int ii=0; ii < Nz; ++ii){
         float i = ii + Sz;
         zz[ii] = sin(M_PI/Lz * i/(N-1) * Lz);
     }
 
     float t_val = cos(((float)t)/K * T + 2*M_PI);
+#pragma omp parallel for
     for (int i = 0; i < Nx; ++i){
         for (int j = 0; j < Ny; ++j){
             for (int k = 0; k < Nz; ++k){
@@ -114,6 +119,7 @@ void laplacian(NdArr& a, NdArr& out, NdArr& p){
     shape_x[0] = Ny;
     shape_x[1] = Nz;
     NdArr max_x_send0(shape_x), max_x_sendN(shape_x);
+#pragma omp parallel for
     for (int j = 0; j < Ny; ++j){
         for (int k = 0; k < Nz; ++k){
             out(0   , j, k) = 0;
@@ -128,6 +134,7 @@ void laplacian(NdArr& a, NdArr& out, NdArr& p){
     shape_y[0] = Nx;
     shape_y[1] = Nz;
     NdArr max_y_send0(shape_y), max_y_sendN(shape_y);
+#pragma omp parallel for
     for (int i = 0; i < Nx; ++i){
         for (int k = 0; k < Nz; ++k){
             out(i, 0,    k) = 0;
@@ -142,6 +149,7 @@ void laplacian(NdArr& a, NdArr& out, NdArr& p){
     shape_z[0] = Nx;
     shape_z[1] = Ny;
     NdArr max_z_send0(shape_z), max_z_sendN(shape_z);
+#pragma omp parallel for
     for (int i = 0; i < Nx; ++i){
         for (int j = 0; j < Ny; ++j){
             out(i, j, 0   ) = 0;
@@ -171,6 +179,7 @@ void laplacian(NdArr& a, NdArr& out, NdArr& p){
     send_recv(src, dst, max_z_sendN, max_z_recv0);
 
 
+#pragma omp parallel for
     for (int i = 0; i < Nx; ++i){
         for (int j = 0; j < Ny; ++j){
             for (int k = 0; k < Nz; ++k){
@@ -178,6 +187,7 @@ void laplacian(NdArr& a, NdArr& out, NdArr& p){
             }
         }
     }
+#pragma omp parallel for
     for (int j = 0; j < Ny; ++j){
         for (int k = 0; k < Nz; ++k){
             int i;
@@ -189,6 +199,7 @@ void laplacian(NdArr& a, NdArr& out, NdArr& p){
             p(i, j+1, k+1) = max_x_recvN(j, k);
         }
     }
+#pragma omp parallel for
     for (int i = 0; i < Nx; ++i){
         for (int k = 0; k < Nz; ++k){
             int j;
@@ -200,6 +211,7 @@ void laplacian(NdArr& a, NdArr& out, NdArr& p){
             p(i+1, j, k+1) = max_y_recvN(i, k);
         }
     }
+#pragma omp parallel for
     for (int i = 0; i < Nx; ++i){
         for (int j = 0; j < Ny; ++j){
             int k;
@@ -223,6 +235,7 @@ void laplacian(NdArr& a, NdArr& out, NdArr& p){
     // }
 
 
+#pragma omp parallel for
     for (int i = 0; i < Nx; ++i){
         for (int j = 0; j < Ny; ++j){
             for (int k = 0; k < Nz; ++k){
@@ -253,6 +266,7 @@ void laplacian(NdArr& a, NdArr& out, NdArr& p){
     // }
 
     if (Px == 0) {
+#pragma omp parallel for
         for (int j = 0; j < Ny; ++j){
             for (int k = 0; k < Nz; ++k){
                 out(0   , j,    k) = 0;
@@ -260,6 +274,7 @@ void laplacian(NdArr& a, NdArr& out, NdArr& p){
         }
     }
     if (Px == NPx-1) {
+#pragma omp parallel for
         for (int j = 0; j < Ny; ++j) {
             for (int k = 0; k < Nz; ++k){
                 out(Nx-1, j,    k) = 0;
@@ -270,6 +285,7 @@ void laplacian(NdArr& a, NdArr& out, NdArr& p){
 
 
     if (Py == 0) {
+#pragma omp parallel for
         for (int i = 0; i < Nx; ++i){
             for (int k = 0; k < Nz; ++k){
                 out(i   , 0   , k) = 0;
@@ -277,6 +293,7 @@ void laplacian(NdArr& a, NdArr& out, NdArr& p){
         }
     }
     if (Py == NPy-1) {
+#pragma omp parallel for
         for (int i = 0; i < Nx; ++i){
             for (int k = 0; k < Nz; ++k){
                 out(i   , Ny-1, k) = 0;
@@ -287,6 +304,7 @@ void laplacian(NdArr& a, NdArr& out, NdArr& p){
 
             // type 1
     if (Pz == 0) {
+#pragma omp parallel for
         for (int i = 0; i < Nx; ++i){
             for (int j = 0; j < Ny; ++j){
                 out(i, j, 0  ) = 0;
@@ -294,6 +312,7 @@ void laplacian(NdArr& a, NdArr& out, NdArr& p){
         }
     }
     if (Pz == NPz-1) {
+#pragma omp parallel for
         for (int i = 0; i < Nx; ++i){
             for (int j = 0; j < Ny; ++j){
                 out(i, j, Nz-1) = 0;
@@ -407,6 +426,7 @@ int main(int argc, char** argv){
         {
             anal(a, 0);
 
+#pragma omp parallel for
             for (int i = 0; i < Nx; ++i){
                 for (int j = 0; j < Ny; ++j){
                     for (int k = 0; k < Nz; ++k){
@@ -424,6 +444,7 @@ int main(int argc, char** argv){
             anal(a, 1);
             laplacian(u_prev_prev, lap, p);
 
+#pragma omp parallel for
             for (int i = 0; i < Nx; ++i){
                 for (int j = 0; j < Ny; ++j){
                     for (int k = 0; k < Nz; ++k){
@@ -447,6 +468,7 @@ int main(int argc, char** argv){
             anal(a, t);
             laplacian(u_prev, lap, p);
 
+#pragma omp parallel for
             for (int i = 0; i < Nx; ++i){
                 for (int j = 0; j < Ny; ++j){
                     for (int k = 0; k < Nz; ++k){
