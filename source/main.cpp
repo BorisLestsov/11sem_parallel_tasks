@@ -329,6 +329,7 @@ void laplacian(NdArr& a, NdArr& out, NdArr& p){
 
 
 int main(int argc, char** argv){
+    double t1, t2;
 
     Lx = atof(argv[1]);
     Ly = atof(argv[2]);
@@ -348,6 +349,7 @@ int main(int argc, char** argv){
     MPI_Comm_set_errhandler(MPI_COMM_WORLD, MPI_ERRORS_ARE_FATAL);
 
     try {
+        t1 = MPI_Wtime();
         MPI_Comm_size(MPI_COMM_WORLD, &comm_size);
         MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
@@ -504,6 +506,9 @@ int main(int argc, char** argv){
         std::cerr << e.what() << std::endl;
         MPI_Abort(MPI_COMM_WORLD, -1);
     }
+    t2 = MPI_Wtime();
+    if (rank == 0)
+        std::cout << "TIME: " << t2 - t1 << std::endl;
 
     MPI_Finalize();
 
